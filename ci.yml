@@ -1,0 +1,40 @@
+name: DevSecMLOps CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Train demonstration model
+        run: python -m app.train
+
+      - name: Run automated tests
+        run: python -m pytest -v
+
+      - name: Scan Python source with Bandit
+        run: python -m bandit -r app tests
+
+      - name: Audit Python dependencies
+        run: python -m pip_audit
+
+      - name: Build Docker image
+        run: docker build -t smart-email-classifier .
